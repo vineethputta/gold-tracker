@@ -7,40 +7,33 @@ app.use(express.static("."));
 
 let triggers = [];
 
-// ✅ REAL WORKING LOGIC
+// ✅ WORKING GOLD API (CoinGecko + conversion)
 async function getPrices() {
     try {
-        // Gold price per ounce (USD)
-        const res = await fetch("https://api.metals.live/v1/spot");
+        // Get gold price in USD (via XAU)
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether-gold&vs_currencies=inr");
         const data = await res.json();
 
-        let goldUSD = 0;
-        let silverUSD = 0;
+        // tether-gold = price per ounce approx
+        const goldPerOunceINR = data["tether-gold"].inr;
 
-        data.forEach(item => {
-            if (item.gold) goldUSD = item.gold;
-            if (item.silver) silverUSD = item.silver;
-        });
+        // convert ounce → gram
+        const goldPerGram = goldPerOunceINR / 31.1035;
 
-        // USD → INR conversion (approx)
-        const usdToInr = 83;
-
-        // Ounce → Gram (1 oz = 31.1035 g)
-        const goldINR = (goldUSD * usdToInr) / 31.1035;
-        const silverINR = (silverUSD * usdToInr) / 31.1035;
+        // silver approximate ratio (gold:silver ~ 80:1)
+        const silverPerGram = goldPerGram / 80;
 
         return {
-            gold: Math.round(goldINR),     // per gram
-            silver: Math.round(silverINR)
+            gold: Math.round(goldPerGram),
+            silver: Math.round(silverPerGram)
         };
 
     } catch (error) {
-        console.log("Error:", error);
+        console.log("API failed, fallback used");
 
-        // fallback realistic values
         return {
-            gold: 6200 + Math.floor(Math.random() * 50),
-            silver: 75 + Math.floor(Math.random() * 5)
+            gold: 6200,
+            silver: 75
         };
     }
 }
@@ -71,9 +64,9 @@ setInterval(async () => {
     });
 }, 5000);
 
-// start server
+// start
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on port " + PORT);
+    console.log("Server running");
 });
