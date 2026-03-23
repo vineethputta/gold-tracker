@@ -1,38 +1,48 @@
 const express = require("express");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
 app.use(express.static("."));
 
-// Store triggers
 let triggers = [];
 
-// ✅ Generate realistic Indian prices
-function getPrices() {
-    return {
-        gold: 6200 + Math.floor(Math.random() * 100),   // ₹6200–6300
-        silver: 75 + Math.floor(Math.random() * 5)      // ₹75–80
-    };
+// ✅ REAL GOLD API (India)
+async function getPrices() {
+    try {
+        const res = await fetch("https://api.metals.dev/v1/latest?api_key=demo&currency=INR&unit=g");
+        const data = await res.json();
+
+        return {
+            gold: Math.round(data.metals.gold),
+            silver: Math.round(data.metals.silver)
+        };
+    } catch (error) {
+        console.log("API error:", error);
+
+        // fallback
+        return {
+            gold: 6200 + Math.floor(Math.random() * 50),
+            silver: 75 + Math.floor(Math.random() * 5)
+        };
+    }
 }
 
-// ✅ API to send prices
-app.get("/prices", (req, res) => {
-    res.json(getPrices());
+// API
+app.get("/prices", async (req, res) => {
+    res.json(await getPrices());
 });
 
-// ✅ Save trigger
+// trigger
 app.post("/set-trigger", (req, res) => {
     const { type, price } = req.body;
-
     triggers.push({ type, price });
-    console.log("Triggers:", triggers);
-
     res.json({ message: "Trigger set!" });
 });
 
-// ✅ Check triggers every 2 sec
-setInterval(() => {
-    const prices = getPrices();
+// check trigger
+setInterval(async () => {
+    const prices = await getPrices();
 
     triggers.forEach(t => {
         if (
@@ -42,11 +52,11 @@ setInterval(() => {
             console.log(`ALERT: ${t.type} reached ₹${t.price}`);
         }
     });
-}, 2000);
+}, 5000);
 
-// ✅ Start server
+// start
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on port " + PORT);
+    console.log("Server running");
 });
