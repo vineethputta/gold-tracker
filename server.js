@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -8,35 +7,17 @@ app.use(express.static("."));
 // Store triggers
 let triggers = [];
 
-// ✅ Get Gold & Silver Prices
-async function getPrices() {
-    try {
-        const res = await fetch("https://api.metals.live/v1/spot");
-        const data = await res.json();
-
-        let gold = 0;
-        let silver = 0;
-
-        data.forEach(item => {
-            if (item.gold) gold = item.gold;
-            if (item.silver) silver = item.silver;
-        });
-
-        // Convert USD → INR approx
-        return {
-            gold: Math.round(gold * 83),
-            silver: Math.round(silver * 83)
-        };
-    } catch (error) {
-        console.log("Error fetching prices:", error);
-        return { gold: 0, silver: 0 };
-    }
+// ✅ Generate realistic Indian prices
+function getPrices() {
+    return {
+        gold: 6200 + Math.floor(Math.random() * 100),   // ₹6200–6300
+        silver: 75 + Math.floor(Math.random() * 5)      // ₹75–80
+    };
 }
 
 // ✅ API to send prices
-app.get("/prices", async (req, res) => {
-    const prices = await getPrices();
-    res.json(prices);
+app.get("/prices", (req, res) => {
+    res.json(getPrices());
 });
 
 // ✅ Save trigger
@@ -44,14 +25,14 @@ app.post("/set-trigger", (req, res) => {
     const { type, price } = req.body;
 
     triggers.push({ type, price });
-    console.log("Trigger added:", triggers);
+    console.log("Triggers:", triggers);
 
-    res.json({ message: "Trigger set successfully" });
+    res.json({ message: "Trigger set!" });
 });
 
-// ✅ Check trigger every 5 seconds
-setInterval(async () => {
-    const prices = await getPrices();
+// ✅ Check triggers every 2 sec
+setInterval(() => {
+    const prices = getPrices();
 
     triggers.forEach(t => {
         if (
@@ -61,7 +42,7 @@ setInterval(async () => {
             console.log(`ALERT: ${t.type} reached ₹${t.price}`);
         }
     });
-}, 5000);
+}, 2000);
 
 // ✅ Start server
 const PORT = process.env.PORT || 3000;
