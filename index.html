@@ -8,8 +8,24 @@
 <body style="text-align:center;font-family:sans-serif;">
 
 <h2>Live Prices</h2>
+
 <p>Gold: ₹ <span id="gold">--</span></p>
 <p>Silver: ₹ <span id="silver">--</span></p>
+
+<h3>Set Alert</h3>
+
+<select id="type">
+  <option value="gold">Gold</option>
+  <option value="silver">Silver</option>
+</select>
+
+<br><br>
+
+<input type="number" id="price" placeholder="Enter target price">
+
+<br><br>
+
+<button onclick="setTrigger()">Set Alert</button>
 
 <script src="script.js"></script>
 
