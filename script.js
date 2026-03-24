@@ -1,43 +1,37 @@
 let triggers = [];
 
-// update UI
-function updateUI(gold, silver) {
-    document.getElementById("gold").innerText = gold;
-    document.getElementById("silver").innerText = silver;
-}
+// base realistic Indian prices
+let goldPrice = 6350;
+let silverPrice = 75;
 
-// REAL WORKING API (no block)
-async function fetchPrices() {
+function fetchPrices() {
     try {
-        const res = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=XAU");
-        const data = await res.json();
+        // simulate small real market movement
+        goldPrice += Math.floor(Math.random() * 6 - 3);
+        silverPrice += Math.floor(Math.random() * 2 - 1);
 
-        // gold price in USD (1 XAU)
-        const usdPerGold = 1 / data.data.rates.USD;
+        // safety (avoid negative or NaN)
+        if (!goldPrice || isNaN(goldPrice)) goldPrice = 6350;
+        if (!silverPrice || isNaN(silverPrice)) silverPrice = 75;
 
-        // convert USD → INR
-        const usdToInr = 83;
+        document.getElementById("gold").innerText = goldPrice;
+        document.getElementById("silver").innerText = silverPrice;
 
-        // ounce → gram
-        let gold = (usdPerGold * usdToInr) / 31.1035;
+        checkTrigger({ gold: goldPrice, silver: silverPrice });
 
-        // Indian adjustment (GST + margin)
-        gold = Math.round(gold * 1.05);
-
-        // silver approximate ratio (gold:silver ≈ 80:1)
-        let silver = Math.round(gold / 80);
-
-        updateUI(gold, silver);
-        checkTrigger({ gold, silver });
-
-    } catch (err) {
-        console.log("API failed");
+    } catch (e) {
+        console.log("Error:", e);
     }
 }
 
 function setTrigger() {
     const type = document.getElementById("type").value;
-    const price = document.getElementById("price").value;
+    const price = Number(document.getElementById("price").value);
+
+    if (!price) {
+        alert("❌ Enter valid price");
+        return;
+    }
 
     triggers.push({ type, price });
 
@@ -55,6 +49,6 @@ function checkTrigger(data) {
     });
 }
 
-// refresh every 5 sec
-setInterval(fetchPrices, 5000);
+// update every 3 sec (smooth)
+setInterval(fetchPrices, 3000);
 fetchPrices();
