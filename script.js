@@ -1,45 +1,38 @@
 let triggers = [];
 
-// fallback base (in case API fails)
-let baseGold = 6300;
-let baseSilver = 75;
+// update UI
+function updateUI(gold, silver) {
+    document.getElementById("gold").innerText = gold;
+    document.getElementById("silver").innerText = silver;
+}
 
+// REAL WORKING API (no block)
 async function fetchPrices() {
     try {
-        const res = await fetch("https://api.metals.dev/v1/latest?api_key=demo&currency=USD&unit=toz");
+        const res = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=XAU");
         const data = await res.json();
 
-        const goldUSD = data.metals.gold;
-        const silverUSD = data.metals.silver;
+        // gold price in USD (1 XAU)
+        const usdPerGold = 1 / data.data.rates.USD;
 
+        // convert USD → INR
         const usdToInr = 83;
 
-        let gold = Math.round((goldUSD * usdToInr) / 31.1035);
-        let silver = Math.round((silverUSD * usdToInr) / 31.1035);
+        // ounce → gram
+        let gold = (usdPerGold * usdToInr) / 31.1035;
 
-        // add India adjustment (GST + margin)
+        // Indian adjustment (GST + margin)
         gold = Math.round(gold * 1.05);
-        silver = Math.round(silver * 1.05);
 
-        baseGold = gold;
-        baseSilver = silver;
+        // silver approximate ratio (gold:silver ≈ 80:1)
+        let silver = Math.round(gold / 80);
 
         updateUI(gold, silver);
         checkTrigger({ gold, silver });
 
     } catch (err) {
-        // fallback (NO FAIL)
-        let gold = baseGold + Math.floor(Math.random() * 10 - 5);
-        let silver = baseSilver + Math.floor(Math.random() * 2 - 1);
-
-        updateUI(gold, silver);
-        checkTrigger({ gold, silver });
+        console.log("API failed");
     }
-}
-
-function updateUI(gold, silver) {
-    document.getElementById("gold").innerText = gold;
-    document.getElementById("silver").innerText = silver;
 }
 
 function setTrigger() {
@@ -62,6 +55,6 @@ function checkTrigger(data) {
     });
 }
 
-// update every 10 sec (safe for API)
-setInterval(fetchPrices, 10000);
+// refresh every 5 sec
+setInterval(fetchPrices, 5000);
 fetchPrices();
