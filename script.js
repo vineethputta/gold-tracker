@@ -1,27 +1,18 @@
 let triggers = [];
 
-async function fetchPrices() {
-    try {
-        // Fetch gold price from CoinGecko (works in browser)
-        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether-gold&vs_currencies=inr");
-        const data = await res.json();
+// Base Indian prices (close to real)
+let baseGold = 6300;
+let baseSilver = 75;
 
-        const goldPerOunce = data["tether-gold"].inr;
+function fetchPrices() {
+    // simulate real-time fluctuation
+    let gold = baseGold + Math.floor(Math.random() * 20 - 10);
+    let silver = baseSilver + Math.floor(Math.random() * 2 - 1);
 
-        // Convert ounce → gram
-        const gold = Math.round(goldPerOunce / 31.1035);
+    document.getElementById("gold").innerText = gold;
+    document.getElementById("silver").innerText = silver;
 
-        // Approx silver (ratio)
-        const silver = Math.round(gold / 80);
-
-        document.getElementById("gold").innerText = gold;
-        document.getElementById("silver").innerText = silver;
-
-        checkTrigger({ gold, silver });
-
-    } catch (e) {
-        console.log("Error fetching price");
-    }
+    checkTrigger({ gold, silver });
 }
 
 function setTrigger() {
