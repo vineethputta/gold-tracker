@@ -1,13 +1,27 @@
 let triggers = [];
 
 async function fetchPrices() {
-    const res = await fetch("/prices");
-    const data = await res.json();
+    try {
+        // Fetch gold price from CoinGecko (works in browser)
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether-gold&vs_currencies=inr");
+        const data = await res.json();
 
-    document.getElementById("gold").innerText = data.gold;
-    document.getElementById("silver").innerText = data.silver;
+        const goldPerOunce = data["tether-gold"].inr;
 
-    checkTrigger(data);
+        // Convert ounce → gram
+        const gold = Math.round(goldPerOunce / 31.1035);
+
+        // Approx silver (ratio)
+        const silver = Math.round(gold / 80);
+
+        document.getElementById("gold").innerText = gold;
+        document.getElementById("silver").innerText = silver;
+
+        checkTrigger({ gold, silver });
+
+    } catch (e) {
+        console.log("Error fetching price");
+    }
 }
 
 function setTrigger() {
